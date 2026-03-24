@@ -33,7 +33,7 @@ import Dashboard from "./pages/Dashboard.jsx";
 import BoardingBooking from "./pages/User/BoardingBooking.jsx";
 import MyBoardingBookings from "./pages/User/MyBoardingBookings.jsx";
 
-import Services from "./pages/Services/services.jsx";
+import Services from "./pages/Services/Services.jsx";
 import ServiceDetails from "./pages/Services/ServiceDetails.jsx";
 import BookService from "./pages/Services/BookService";
 
