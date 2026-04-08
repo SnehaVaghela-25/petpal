@@ -20,7 +20,7 @@ This is the frontend of the project built using **React.js + Vite**, following a
 * 🔔 Notifications system
 * 📖 Pet care tips and detailed guides
 * 👤 User dashboard
-* 🔐 Authentication (if implemented)
+* 🔐 Authentication 
 
 ## 📂 Folder Structure
 
