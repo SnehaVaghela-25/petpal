@@ -155,7 +155,8 @@ function ShowInterest() {
       /* 💳 STEP 2: PAYMENT */
 
       const paymentSuccess = await startRazorpayPayment({
-        amount: 500,
+        // amount: 500,
+        amount: pet.bookingFee || 500,
         user: currentUser,
         serviceType: "adoption",
         referenceId: pet.id,
@@ -182,8 +183,8 @@ function ShowInterest() {
 
         paymentType: "advance",
         paidAmount: 500,
-        remainingAmount: (pet.price || 2000) - 500,
-
+        // remainingAmount: (pet.price || 2000) - 500,
+        remainingAmount: (pet.adoptionFee || 0) - (pet.bookingFee || 500),
         paymentStatus: "partial",
         status: "Pending",
 
@@ -329,8 +330,10 @@ function ShowInterest() {
                     </div>
 
                     <button type="submit" className="btn" disabled={loading}>
-                      Pay ₹500 in Advance & Send Request
-                      {loading ? "Processing..." : "Pay ₹500 & Send Request"}
+                      {/* Pay ₹500 in Advance & Send Request */}
+                      {loading
+                        ? "Processing..."
+                        : `Pay ₹${pet?.bookingFee || 500} & Send Request`}
                       <img
                         src="/assets/img/icon/right_arrow.svg"
                         alt=""
@@ -344,8 +347,10 @@ function ShowInterest() {
                         marginTop: "10px",
                       }}
                     >
-                      ₹500 advance required. Remaining amount will be paid
-                      during adoption.
+                      {/* ₹500 advance required. Remaining amount will be paid
+                      during adoption. */}
+                      ₹{pet?.bookingFee || 500} advance required. Remaining
+                      amount will be paid during adoption.
                     </p>
                   </form>
                 </div>

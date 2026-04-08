@@ -153,7 +153,7 @@ function Cart() {
 
                       <button
                         onClick={handleCheckout}
-                        className="btn btn-primary w-100 mt-3"
+                        className="btn btn-theme w-100 mt-3"
                       >
                         Proceed to Checkout
                       </button>

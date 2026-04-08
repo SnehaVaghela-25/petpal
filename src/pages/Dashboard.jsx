@@ -2,9 +2,15 @@
   
   import { useEffect, useState } from "react";
 
-  import { doc, getDoc } from "firebase/firestore";
   import { db } from "../firebase/firebase";
-  import { collection, query, where, getDocs } from "firebase/firestore";
+  import {
+    collection,
+    query,
+    where,
+    getDocs,
+    doc,
+    getDoc,
+  } from "firebase/firestore";
   import { NavLink, useNavigate } from "react-router-dom";
 
   import Navbar from "../components/Navbar";
@@ -23,6 +29,15 @@
     const [dailyTip, setDailyTip] = useState(null);
 
     const user = useUserStore((state) => state.user);
+
+    const activeBoardings = boardingBookings.filter(
+      (b) => b.status === "active",
+    );
+
+    const upcomingBoardings = boardingBookings.filter(
+      (b) => b.status === "approved",
+    );
+
 
     useEffect(() => {
       if (!user?.uid) {
@@ -62,9 +77,7 @@
 
           setPets(mergedPets);
 
-          
-
-          // 🟢 OTHER DATA
+        
           await fetchHealthAlerts(mergedPets);
           await fetchBoardingBookings(user);
           await fetchDailyTip();
@@ -76,28 +89,8 @@
       loadDashboard();
     }, [user]);
    
-    // async function fetchAdoptedPets(user) {
-    //   const q = query(
-    //     collection(db, "adoptionRequest"),
-    //     where("userId", "==", user.uid),
-    //     where("status", "==", "approved"),
-    //   );
-
-    //   const snapshot = await getDocs(q);
-
-    //   const adoptedPets = snapshot.docs.map((doc) => ({
-    //     id: doc.data().petId,
-    //     name: doc.data().petName,
-    //     categoryName: doc.data().category,
-    //     breed: doc.data().breed,
-    //     adopted: true,
-    //     image: doc.data().image || null,
-    //   }));
-
-    //   return adoptedPets;
-    // }
+   
 async function fetchAdoptedPets(user) {
-  // 1. Get all adoption records
   const adoptionSnap = await getDocs(
     query(collection(db, "adoptionRequest"), where("userId", "==", user.uid)),
   );
@@ -106,7 +99,6 @@ async function fetchAdoptedPets(user) {
 
   console.log("Adoption Data:", adoptionData);
 
-  // 2. Get all care packs once
   const careSnap = await getDocs(
     query(collection(db, "pet_care_packs"), where("userId", "==", user.uid)),
   );
@@ -273,7 +265,6 @@ async function fetchAdoptedPets(user) {
             <div className="container">
               <div className="section__title text-center mb-40">
                 <span className="sub-title">My Pets</span>
-                
               </div>
 
               <div className="row justify-content-center">
@@ -355,37 +346,49 @@ async function fetchAdoptedPets(user) {
           </section>
 
           {/* Boarding Requests Cards */}
-
-          {boardingBookings.length > 0 && (
+          {boardingBookings.length > 0 &&
+            activeBoardings.length === 0 &&
+            upcomingBoardings.length === 0 && (
+              <p className="text-center mt-4">
+                No active or upcoming boarding bookings.
+              </p>
+            )}
+            
+          {activeBoardings.length > 0 && (
             <section className="container mt-5">
               <div className="section__title text-center mb-40">
-                <span className="sub-title">Pet Boarding</span>
-                <h2 className="title">My Boarding Requests</h2>
+                <h2 className="title">🟢 Current Boarding</h2>
               </div>
 
               <div className="row">
-                {boardingBookings.map((b) => (
+                {activeBoardings.map((b) => (
                   <div key={b.id} className="col-md-4 mb-4">
                     <div className="card shadow-sm p-4 text-center">
                       <h4>🐾 {b.petName}</h4>
-                      <h4 className="mb-2">🐶 {b.petName}</h4>
-                      <p className="text-muted mb-2">
-                        📅 {b.startDate} → {b.endDate}
-                      </p>
+                      <p className="text-muted">📅 Till: {b.endDate}</p>
+                      <span className="badge bg-success">Active</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
-                      <div>
-                        {b.status === "pending" && (
-                          <span className="badge bg-warning">Pending</span>
-                        )}
+          {upcomingBoardings.length > 0 && (
+            <section className="container mt-5">
+              <div className="section__title text-center mb-40">
+                <h2 className="title">🔵 Upcoming Boarding</h2>
+              </div>
 
-                        {b.status === "approved" && (
-                          <span className="badge bg-success">Approved</span>
-                        )}
+              <div className="row">
+                {upcomingBoardings.map((b) => (
+                  <div key={b.id} className="col-md-4 mb-4">
+                    <div className="card shadow-sm p-4 text-center">
+                      <h4>🐾 {b.petName}</h4>
 
-                        {b.status === "rejected" && (
-                          <span className="badge bg-danger">Rejected</span>
-                        )}
-                      </div>
+                      <p className="text-muted">📅 From: {b.startDate}</p>
+
+                      <span className="badge bg-primary">Approved</span>
                     </div>
                   </div>
                 ))}

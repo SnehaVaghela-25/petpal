@@ -5,7 +5,17 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase/firebase";
 import { signOut } from "firebase/auth";
 import { useSelector } from "react-redux";
-import { doc, query, collection, where, onSnapshot } from "firebase/firestore";
+import {
+  doc,
+  query,
+  collection,
+  where,
+  onSnapshot,
+  getDocs,
+  addDoc,
+  serverTimestamp,
+  updateDoc,
+} from "firebase/firestore";
 import { FaShoppingCart, FaBell, FaPaw, FaUserCircle } from "react-icons/fa";
 
 function Navbar() {
@@ -31,28 +41,184 @@ const profileRef = useRef(null);
     0,
   );
 
-  useEffect(() => {
-    if (!userStore?.uid) return;
+async function checkHealthReminders(userId) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-    const q = query(
-      collection(db, "notifications"),
-      where("userId", "==", userStore.uid),
-    );
+  const q = query(
+    collection(db, "petHealthRecords"),
+    where("userId", "==", userId),
+  );
+
+  const snapshot = await getDocs(q);
+
+  for (let docSnap of snapshot.docs) {
+    const rec = docSnap.data();
+
+    if (!rec.nextDueDate || rec.userId !== userId) continue;
+
+    const dueDate = rec.nextDueDate.seconds
+      ? new Date(rec.nextDueDate.seconds * 1000)
+      : new Date(rec.nextDueDate);
+
+    const diff = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+
+    let message = null;
+
+    if (diff === 7) {
+      message = `⚠ Vaccine ${rec.vaccineName} due in 7 days`;
+    } else if (diff === 3) {
+      message = `⏰ Vaccine ${rec.vaccineName} due in 3 days`;
+    } else if (diff < 0) {
+      message = `❌ Vaccine ${rec.vaccineName} is overdue`;
+    }
+
+    if (message) {
+      const existing = await getDocs(
+        query(
+          collection(db, "notifications"),
+          where("relatedId", "==", docSnap.id),
+          where("type", "==", "vaccine"),
+          where("stage","==","7days")
+        ),
+      );
+
+      if (!existing.empty) continue;
+
+      await addDoc(collection(db, "notifications"), {
+        userId,
+        type: "vaccine",
+        stage: "7days",
+        message,
+        link: `/pet-health/${rec.petId}`,
+        relatedId: docSnap.id,
+        seen: false,
+        createdAt: serverTimestamp(),
+      });
+    }
+  }
+}
+
+
+
+
+async function updateBoardingStatus(userId) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const q = query(
+    collection(db, "boardingBookings"),
+    where("userId", "==", userId),
+  );
+
+  const snapshot = await getDocs(q);
+
+  for (let docSnap of snapshot.docs) {
+    const data = docSnap.data();
+
+    const start = new Date(data.startDate + "T00:00:00");
+    const end = new Date(data.endDate + "T00:00:00");
+
+    const ref = doc(db, "boardingBookings", docSnap.id);
+
+    // 🔵 APPROVED → ACTIVE
+    if (
+      data.status === "approved" &&
+      today >= start &&
+      data.status !== "active"
+    ) {
+      await updateDoc(ref, { status: "active" });
+
+      await addDoc(collection(db, "notifications"), {
+        userId,
+        type: "boarding",
+        stage: "start",
+        message: `📦 Your pet boarding starts today`,
+        link: "/dashboard",
+        relatedId: docSnap.id,
+        seen: false,
+        createdAt: serverTimestamp(),
+      });
+    }
+
+    // 🟢 ACTIVE → COMPLETED
+    if (
+      data.status === "active" &&
+      today > end &&
+      data.status !== "completed"
+    ) {
+      await updateDoc(ref, { status: "completed" });
+
+      await addDoc(collection(db, "notifications"), {
+        userId,
+        type: "boarding",
+        stage: "completed",
+        message: `🏠 Your pet boarding has ended`,
+        link: "/dashboard",
+        relatedId: docSnap.id,
+        seen: false,
+        createdAt: serverTimestamp(),
+      });
+    }
+  }
+}
+
+  // useEffect(() => {
+  //   if (!userStore?.uid) return;
     
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+  //   const q = query(
+  //     collection(db, "notifications"),
+  //     where("userId", "==", userStore.uid),
+  //   );
+    
+  //   const unsubscribe = onSnapshot(q, (snapshot) => {
 
-      console.log("Notifications snapshot:", snapshot.docs.length);
+  //     console.log("Notifications snapshot:", snapshot.docs.length);
 
-      const results = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setNotifications(results);
-      setAlertCount(results.filter((n) => !n.seen).length);
-    });
+  //     const results = snapshot.docs.map((doc) => ({
+  //       id: doc.id,
+  //       ...doc.data(),
+  //     }));
+  //     setNotifications(results);
+  //     setAlertCount(results.filter((n) => !n.seen).length);
+  //   });
 
-    return () => unsubscribe();
-  }, [userStore]);
+  //   return () => unsubscribe();
+  // }, [userStore]);
+
+useEffect(() => {
+  if (!userStore?.uid) return;
+
+  const lastRun = localStorage.getItem("healthCheck");
+
+  if (!lastRun || Date.now() - lastRun > 24 * 60 * 60 * 1000) {
+    checkHealthReminders(userStore.uid);
+
+ updateBoardingStatus(userStore.uid);
+
+
+
+    localStorage.setItem("healthCheck", Date.now());
+  }
+
+  const q = query(
+    collection(db, "notifications"),
+    where("userId", "==", userStore.uid),
+  );
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const results = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    setNotifications(results);
+    setAlertCount(results.filter((n) => !n.seen).length);
+  });
+
+  return () => unsubscribe();
+}, [userStore?.uid]);
+
 
 
   useEffect(() => {
@@ -270,26 +436,6 @@ const profileRef = useRef(null);
                                 )}
                               </NavLink>
                             </li>
-
-                            {/* My Pets */}
-                            {/* <li>
-                              <NavLink
-                                to="/dashboard"
-                                className="btn btn-theme"
-                                style={{
-                                  color: "white",
-                                }}
-                              >
-                                <FaPaw /> My Pets
-                              </NavLink>
-                            </li> */}
-
-                            {/* Logout */}
-                            {/* <li>
-                              <button onClick={handleLogout} className="btn">
-                                Logout
-                              </button>
-                            </li> */}
 
                             {/* Profile */}
                             <li

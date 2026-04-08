@@ -100,7 +100,7 @@ function AdoptionDetails() {
                   >
                     {/* LOCATION */}
                     <div className="mb-3">
-                      <h6>📍 Pickup Location</h6>
+                      <h6>📍Visit Center</h6>
                       <p className="mb-1 text-muted">
                         {data.centerAddress || "Address not available"}
                       </p>
@@ -113,27 +113,32 @@ function AdoptionDetails() {
                         rel="noreferrer"
                         className="btn btn-sm btn-outline-primary mt-2"
                       >
-                        View on Map
+                        Get Directions
                       </a>
                     </div>
 
-                    {/* PICKUP SCHEDULE */}
+                    {/* VISIT / MEET-UP SCHEDULE */}
                     <div className="mb-3">
-                      <h6>📅 Pickup Schedule</h6>
+                      <h6>📅 Visit Schedule</h6>
 
                       <p className="mb-1 text-muted">
                         {data.pickupDate
                           ? new Date(
                               data.pickupDate.seconds * 1000,
                             ).toLocaleDateString()
-                          : "Not assigned"}
+                          : "To be assigned"}
                       </p>
 
                       <p className="mb-0 text-muted">
-                        {data.pickupTime || "Not assigned"}
+                        {data.pickupTime || "To be assigned"}
                       </p>
+
+                      <small className="text-muted">
+                        Please visit the center to meet the pet and complete the
+                        adoption process.
+                      </small>
                     </div>
-                    
+
                     {/* CONTACT */}
                     <div className="mb-3">
                       <h6>📞 Contact</h6>

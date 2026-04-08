@@ -31,6 +31,7 @@ import Notifications from "./pages/Notifications";
 import Dashboard from "./pages/Dashboard.jsx";
 
 import BoardingBooking from "./pages/User/BoardingBooking.jsx";
+import BoardingDetails from "./pages/User/BoardingDetails.jsx";
 import MyBoardingBookings from "./pages/User/MyBoardingBookings.jsx";
 
 import Services from "./pages/Services/Services.jsx";
@@ -103,6 +104,7 @@ function App() {
 
           <Route path="/petboarding" element={<BoardingBooking />} />
           <Route path="/mypetboarding" element={<MyBoardingBookings />} />
+          <Route path="/boarding/:id" element={<BoardingDetails />} />
 
           <Route path="/bookservice/:id" element={<BookService />} />
 

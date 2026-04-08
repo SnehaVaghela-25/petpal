@@ -87,9 +87,9 @@ useEffect(() => {
                 </div>
 
                 <div className="animal__content p-4">
-                  <span className="animal-code text-gray-400 text-sm">
+                  {/* <span className="animal-code text-gray-400 text-sm">
                     ID: {pet.id.slice(0, 6).toUpperCase()}
-                  </span>
+                  </span> */}
                   <h4 className="title mt-1 font-bold text-lg">
                     <NavLink to={`/petdetails/${pet.id}`}>{pet.name}</NavLink>
                   </h4>

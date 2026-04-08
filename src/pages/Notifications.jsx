@@ -10,7 +10,6 @@ import {
   query,
   where,
   onSnapshot,
-  orderBy,
   doc,
   updateDoc,
 } from "firebase/firestore";
@@ -19,9 +18,10 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
 function Notifications() {
-const [requestDetails, setRequestDetails] = useState({});
-const userStore = useUserStore((state) => state.user);
-const navigate = useNavigate();
+
+  const [requestDetails, setRequestDetails] = useState({});
+  const userStore = useUserStore((state) => state.user);
+  const navigate = useNavigate();
 
   const [notifications, setNotifications] = useState([]);
 
@@ -31,7 +31,6 @@ const navigate = useNavigate();
     const q = query(
       collection(db, "notifications"),
       where("userId", "==", userStore.uid),
-      // orderBy("createdAt", "desc"),
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -39,9 +38,7 @@ const navigate = useNavigate();
         id: doc.id,
         ...doc.data(),
       }));
-
-
-      
+    
       setNotifications(data);
     });
 
@@ -67,6 +64,15 @@ useEffect(() => {
 
       if (n.type === "service" && n.relatedId) {
         const ref = doc(db, "serviceBookings", n.relatedId);
+        const snap = await getDoc(ref);
+
+        if (snap.exists()) {
+          details[n.relatedId] = snap.data();
+        }
+      }
+
+      if (n.type === "boarding" && n.relatedId) {
+        const ref = doc(db, "boardingBookings", n.relatedId);
         const snap = await getDoc(ref);
 
         if (snap.exists()) {
@@ -115,12 +121,18 @@ useEffect(() => {
                   ? "bg-primary"
                   : n.type === "service"
                     ? "bg-success"
-                    : "bg-warning";
+                    : n.type === "boarding" 
+                      ? "bg-warning"
+                      : n.type === "vaccine"
+                        ? "bg-danger"
+                        : "bg-secondary";
 
               const viewLink =
                 n.type === "adoption" && n.relatedId
                   ? `/adoption-details/${n.relatedId}`
-                  : n.link || "#";
+                  : n.type === "boarding" && n.relatedId
+                    ? `/boarding/${n.relatedId}` 
+                    : n.link || "#";
 
               return (
                 <div
@@ -129,7 +141,6 @@ useEffect(() => {
                     n.seen ? "alert-light" : "alert-info"
                   } d-flex justify-content-between align-items-start mb-3`}
                 >
-                  {/* LEFT SIDE */}
                   <div>
                     <span className={`badge ${badge} me-2`}>{n.type}</span>
 
@@ -137,20 +148,10 @@ useEffect(() => {
 
                     {/* CENTER DETAILS */}
                     {n.type === "adoption" && requestDetails[n.relatedId] && (
-                      <p className="mt-2 mb-1">
-                        {/* 📍 <b>Petpal Adoption Center</b>
-                        <br />
-                        <small className="text-muted">
-                          {requestDetails[n.relatedId].centerAddress}
-                        </small> */}
-                        {/* <br />
-                        <small className="text-muted">
-                          📞 {requestDetails[n.relatedId].contactNumber}
-                        </small> */}
-                      </p>
+                      <p className="mt-2 mb-1"></p>
                     )}
 
-                    {/* SERVICE DETAILS ✅ FIXED */}
+                    {/* SERVICE DETAILS */}
                     {n.type === "service" && requestDetails[n.relatedId] && (
                       <p className="mt-2 mb-1">
                         🐾 <b>{requestDetails[n.relatedId].serviceName}</b>
@@ -159,11 +160,18 @@ useEffect(() => {
                           📅 {requestDetails[n.relatedId].date}
                         </small>
                         <br />
-                        {/* <small className="text-muted">
-                          📍{" "}
-                          {requestDetails[n.relatedId].location ||
-                            "PetPal Center"}
-                        </small> */}
+                      </p>
+                    )}
+
+                    {/* BOARDING DETAILS */}
+                    {n.type === "boarding" && requestDetails[n.relatedId] && (
+                      <p className="mt-2 mb-1">
+                        🐾 <b>{requestDetails[n.relatedId].petName}</b>
+                        <br />
+                        <small className="text-muted">
+                          📅 {requestDetails[n.relatedId].startDate} →{" "}
+                          {requestDetails[n.relatedId].endDate}
+                        </small>
                       </p>
                     )}
                   </div>

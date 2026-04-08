@@ -41,7 +41,7 @@ function Home() {
                 </div>
 
                 <div className="col-xl-4">
-                  <img src="/assets/img/banner/h2_banner_img.png" alt="pet" />
+                  <img src="/assets/img/banner/h2_banner_img.png" />
                 </div>
               </div>
             </div>

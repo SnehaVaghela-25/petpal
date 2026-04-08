@@ -56,7 +56,7 @@ export default function OrderSuccess() {
 
         <p>Our team will review your order shortly.</p>
 
-        <Link to="/product" className="btn btn-primary">
+        <Link to="/product" className="btn btn-theme">
           Continue Shopping
         </Link>
       </div>

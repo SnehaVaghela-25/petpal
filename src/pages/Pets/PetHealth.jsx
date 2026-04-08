@@ -1,488 +1,428 @@
-// // import { useEffect, useState } from "react";
-// // import { useParams } from "react-router-dom";
-// // import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
-// // import { db } from "../firebase";
 
-// // export default function PetHealth() {
-// //   const { petId } = useParams();
-// //   const [vaccines, setVaccines] = useState([]);
+  import { onAuthStateChanged } from "firebase/auth";
+  import { auth } from "../../firebase/firebase";
 
-// //   useEffect(() => {
-// //     async function fetchVaccines() {
-// //       const q = query(
-// //         collection(db, "petHealthRecords"),
-// //         where("petId", "==", petId),
-// //       );
-// //       const snapshot = await getDocs(q);
-// //       const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-// //       setVaccines(data);
-// //     }
+  import { useEffect, useState } from "react";
+  import { useParams } from "react-router-dom";
+  import {
+    collection,
+    query,
+    where,
+    getDocs,
+    addDoc,
+    serverTimestamp,
+  } from "firebase/firestore";
+  import { db } from "../../firebase/firebase";
+  import Navbar from "../../components/Navbar";
+  import Footer from "../../components/Footer";
+  import PageTitle from "../../components/PageTitle";
 
-// //     fetchVaccines();
-// //   }, [petId]);
+  export default function PetHealth() {
+    const { petId } = useParams();
 
-// //   return (
-// //     <div>
-// //       <h2>Pet Health & Vaccination</h2>
-// //       {vaccines.length === 0 ? (
-// //         <p>No vaccination records yet.</p>
-// //       ) : (
-// //         vaccines.map((vac) => (
-// //           <div
-// //             key={vac.id}
-// //             style={{
-// //               margin: "10px 0",
-// //               border: "1px solid #ccc",
-// //               padding: "10px",
-// //             }}
-// //           >
-// //             <p>Vaccine: {vac.vaccineName}</p>
-// //             <p>Next Due Date: {vac.nextDueDate.toDate().toDateString()}</p>
-// //             <p>Status: {vac.completed ? "Completed" : "Pending"}</p>
-// //           </div>
-// //         ))
-// //       )}
-// //     </div>
-// //   );
-// // }
+    const [pet, setPet] = useState(null);
+    const [showForm, setShowForm] = useState(false);
+    const [records, setRecords ] = useState([]);
+    const [recordType, setRecordType] = useState("vaccination");
+    const [vaccineName, setVaccineName] = useState("");
+    const [givenDate, setGivenDate] = useState("");
 
-// import { useEffect, useState } from "react";
-// import { useParams } from "react-router-dom";
-// import {
-//   collection,
-//   query,
-//   where,
-//   getDocs,
-//   addDoc,
-//   serverTimestamp,
-// } from "firebase/firestore";
-// import { db } from "../../firebase/firebase";
+    const [activeTab, setActiveTab] = useState("vaccination");
 
-// export default function PetHealth() {
-//   const { petId } = useParams();
+    // ================= STATUS =================
+    function getVaccineStatus(date) {
+      if (!date) return { label: "Unknown", className: "bg-secondary" };
 
-//   const [vaccines, setVaccines] = useState([]);
+      const dueDate = date?.seconds
+        ? new Date(date.seconds * 1000)
+        : new Date(date);
 
-//   const [vaccineName, setVaccineName] = useState("");
-//   const [nextDate, setNextDate] = useState("");
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-//   async function fetchVaccines() {
-//     const q = query(
-//       collection(db, "petHealthRecords"),
-//       where("petId", "==", petId),
-//     );
+      const diff = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
 
-//     const snapshot = await getDocs(q);
+      if (diff < 0) return { label: `❌ Overdue`, className: "bg-danger" };
 
-//     const data = snapshot.docs.map((doc) => ({
-//       id: doc.id,
-//       ...doc.data(),
-//     }));
+      if (diff <= 7) return { label: `⚠ Due Soon`, className: "bg-warning" };
 
-//     setVaccines(data);
-//   }
-
-//   useEffect(() => {
-//     fetchVaccines();
-//   }, [petId]);
-
-//   async function addVaccine(e) {
-//     e.preventDefault();
-
-//     try {
-//       await addDoc(collection(db, "petHealthRecords"), {
-//         petId: petId,
-//         vaccineName: vaccineName,
-//         nextDueDate: new Date(nextDate),
-//         completed: false,
-//         createdAt: serverTimestamp(),
-//       });
-
-//       setVaccineName("");
-//       setNextDate("");
-
-//       fetchVaccines();
-//     } catch (error) {
-//       console.error("Error adding vaccine:", error);
-//     }
-//   }
-
-//   return (
-//     <div className="container mt-4">
-//       <h2 className="mb-4">Pet Health & Vaccination</h2>
-
-//       {/* Add Vaccine Form */}
-
-//       <div className="card p-3 mb-4">
-//         <h5>Add Vaccination</h5>
-
-//         <form onSubmit={addVaccine}>
-//           <div className="row">
-//             <div className="col-md-5">
-//               <input
-//                 type="text"
-//                 className="form-control"
-//                 placeholder="Vaccine Name"
-//                 value={vaccineName}
-//                 onChange={(e) => setVaccineName(e.target.value)}
-//                 required
-//               />
-//             </div>
-
-//             <div className="col-md-4">
-//               <input
-//                 type="date"
-//                 className="form-control"
-//                 value={nextDate}
-//                 onChange={(e) => setNextDate(e.target.value)}
-//                 required
-//               />
-//             </div>
-
-//             <div className="col-md-3">
-//               <button className="btn btn-primary w-100">Add Record</button>
-//             </div>
-//           </div>
-//         </form>
-//       </div>
-
-//       {/* Vaccination Records */}
-
-//       {vaccines.length === 0 ? (
-//         <p>No vaccination records yet.</p>
-//       ) : (
-//         <div className="row">
-//           {vaccines.map((vac) => (
-//             <div className="col-md-4" key={vac.id}>
-//               <div className="card mb-3 shadow-sm">
-//                 <div className="card-body">
-//                   <h5>{vac.vaccineName}</h5>
-
-//                   <p>
-//                     Next Due Date:{" "}
-//                     {vac.nextDueDate
-//                       ? new Date(vac.nextDueDate.seconds * 1000).toDateString()
-//                       : "Not set"}
-//                   </p>
-
-//                   <span
-//                     className={`badge ${
-//                       vac.completed ? "bg-success" : "bg-warning"
-//                     }`}
-//                   >
-//                     {vac.completed ? "Completed" : "Pending"}
-//                   </span>
-//                 </div>
-//               </div>
-//             </div>
-//           ))}
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../../firebase/firebase";
-
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  addDoc,
-  serverTimestamp,
-} from "firebase/firestore";
-import { db } from "../../firebase/firebase";
-
-import Navbar from "../../components/Navbar";
-import Footer from "../../components/Footer";
-import PageTitle from "../../components/PageTitle";
-
-export default function PetHealth() {
-  const { petId } = useParams();
-
-
-const [showForm, setShowForm] = useState(false);
-
-  const [vaccines, setVaccines] = useState([]);
-  const [vaccineName, setVaccineName] = useState("");
-  const [nextDate, setNextDate] = useState("");
-  
-  function getVaccineStatus(date) {
-    if (!date) return { label: "Unknown", className: "bg-secondary" };
-
-    const dueDate = date?.seconds
-      ? new Date(date.seconds * 1000)
-      : new Date(date);
-
-    const today = new Date();
-
-    const diff = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
-
-    if (diff < 0) {
-      return {
-        label: `❌ Overdue by ${Math.abs(diff)} days`,
-        className: "bg-danger",
-      };
+      return { label: "✅ Safe", className: "bg-success" };
     }
 
-    if (diff <= 7) {
-      return {
-        label: `⚠ Due in ${diff} days`,
-        className: "bg-warning",
-      };
+
+    async function checkAndSendReminders(records, userId) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      for (let rec of records) {
+        if (!rec.nextDueDate) continue;
+
+        const dueDate = rec.nextDueDate.seconds
+          ? new Date(rec.nextDueDate.seconds * 1000)
+          : new Date(rec.nextDueDate);
+
+        const diff = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+
+        let message = null;
+
+        if (diff === 7) {
+          message = `⚠ Vaccine ${rec.vaccineName} due in 7 days`;
+        } else if (diff === 3) {
+          message = `⏰ Vaccine ${rec.vaccineName} due in 3 days`;
+        } else if (diff < 0) {
+          message = `❌ Vaccine ${rec.vaccineName} is overdue`;
+        }
+
+        if (message) {
+          const existingQuery = query(
+          collection(db, "notifications"),
+          where("relatedId", "==", rec.id),
+          where("type", "==", "vaccine")
+        );
+
+        const existingSnap = await getDocs(existingQuery);
+
+        if (!existingSnap.empty) continue;
+          await addDoc(collection(db, "notifications"), {
+            userId,
+            type: "vaccine",
+            message,
+            link: `/pet-health/${rec.petId}`,
+            relatedId: rec.id,
+            seen: false,
+            createdAt: serverTimestamp(),
+          });
+        }
+      }
     }
 
-    return {
-      label: "Upcoming",
-      className: "bg-success",
-    };
-  }
+    // ================= FETCH =================
+    async function fetchRecords(user) {
+      if (!petId) return;
+
+      const q = query(
+        collection(db, "petHealthRecords"),
+        where("petId", "==", petId),
+      );
+
+      const snapshot = await getDocs(q);
+
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      // sort by next due date
+      data.sort((a, b) => {
+        const d1 = a.nextDueDate?.seconds
+          ? new Date(a.nextDueDate.seconds * 1000)
+          : new Date(a.nextDueDate);
+
+        const d2 = b.nextDueDate?.seconds
+          ? new Date(b.nextDueDate.seconds * 1000)
+          : new Date(b.nextDueDate);
+
+        return d1 - d2;
+      });
+
+      setRecords(data);
+
+      // ✅ ADD THIS LINE
+      await checkAndSendReminders(data, user.uid);
+    }
 
 
-// async function fetchVaccines() {
-//   if (!petId) return;
+    async function fetchPet() {
+      if (!petId) return;
 
-//   const q = query(
-//     collection(db, "petHealthRecords"),
-//     where("petId", "==", petId),
-//   );
+      const snap = await getDocs(
+        query(collection(db, "pets"), where("__name__", "==", petId)),
+      );
 
-//   const snapshot = await getDocs(q);
-
-//   const data = snapshot.docs.map((doc) => ({
-//     id: doc.id,
-//     ...doc.data(),
-//   }));
-
-//   // sort newest first
-//   data.sort((a, b) => {
-//     const dateA = a.nextDueDate?.seconds
-//       ? new Date(a.nextDueDate.seconds * 1000)
-//       : new Date(a.nextDueDate);
-
-//     const dateB = b.nextDueDate?.seconds
-//       ? new Date(b.nextDueDate.seconds * 1000)
-//       : new Date(b.nextDueDate);
-
-//     return dateA - dateB;
-//   });
-
-//   setVaccines(data);
-// }
+      snap.forEach((doc) => {
+        setPet({ id: doc.id, ...doc.data() });
+      });
+    }
 
 
-async function fetchVaccines() {
-  if (!petId) return;
+    useEffect(() => {
+      const unsub = onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          setRecords([]);
+          return;
+        }
+        fetchRecords(user);
+        fetchPet();
+      });
 
-  const q = query(
-    collection(db, "petHealthRecords"),
-    where("petId", "==", petId),
-  );
+      return () => unsub();
+    }, [petId]);
 
-  const snapshot = await getDocs(q);
+    // ================= CALCULATE =================
+    function calculateNextDueDate(vaccine, date) {
+      const d = new Date(date);
+      d.setFullYear(d.getFullYear() + 1);
+      return d;
+    }
 
-  const records = snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+    // ================= ADD =================
+    async function addRecord(e) {
+      e.preventDefault();
 
-  setVaccines(records);
-}
+      if (!recordType || !givenDate) {
+        alert("Fill all fields");
+        return;
+      }
 
+      await addDoc(collection(db, "petHealthRecords"), {
+        petId,
+        // vaccineName,
+        vaccineName: recordType === "vaccination" ? vaccineName : recordType,
+        // type: "vaccination",
+        type: recordType,
+        givenDate: new Date(givenDate),
+        nextDueDate: calculateNextDueDate(vaccineName, givenDate),
+        createdAt: serverTimestamp(),
+      });
+      
+      await addDoc(collection(db, "notifications"), {
+        userId: userId,
+        type: "vaccine",
+        message: `⚠ Vaccine ${rec.vaccineName} due in 3 days`,
+        link: `/pet-health/${rec.petId}`,
+        relatedId: rec.id,
+        seen: false,
+        createdAt: serverTimestamp(),
+      });
+      setVaccineName("");
+      setGivenDate("");
+      setShowForm(false);
+      // fetchRecords();
+      fetchRecords({ uid: auth.currentUser.uid });
+    }
 
- useEffect(() => {
-   const unsubscribe = onAuthStateChanged(auth, (user) => {
-     if (!user) {
-       setVaccines([]);
-       return;
-     }
+    // ================= UI =================
+    return (
+      <>
+        <Navbar />
 
-     fetchVaccines();
-   });
+        <main className="fix">
+          <PageTitle title="Your Pet’s Health Records" />
 
-   return () => unsubscribe();
- }, [petId]);
-
-
-
-function calculateNextDueDate(vaccine, givenDate) {
-  const date = new Date(givenDate);
-
-  if (vaccine === "Rabies") {
-    date.setFullYear(date.getFullYear() + 1);
-  } else if (vaccine === "FVRCP") {
-    date.setFullYear(date.getFullYear() + 1);
-  } else if (vaccine === "FeLV") {
-    date.setFullYear(date.getFullYear() + 1);
-  }
-
-  return date;
-}
-
-
-  async function addVaccine(e) {
-    e.preventDefault();
-
-     if (!vaccineName || !nextDate) {
-       alert("Please fill all fields");
-       return;
-     }
-  const nextDue = calculateNextDueDate(vaccineName, nextDate);
-
-     await addDoc(collection(db, "petHealthRecords"), {
-       petId,
-       vaccineName,
-       givenDate: new Date(nextDate),
-       nextDueDate: nextDue,
-       createdAt: serverTimestamp(),
-     });
-
-    setVaccineName("");
-    setNextDate("");
-
-    fetchVaccines();
-
-    setShowForm(false);
-  
-  }
-
-  return (
-    <>
-      <Navbar />
-
-      <main className="fix">
-        <PageTitle title={"Pet Health & Vaccination"} />
-
-        <section className="registration__area-two">
           <div className="container">
-            <div className="registration__inner-wrap-two">
+            {/* ================= PET PROFILE ================= */}
+            {pet && (
+              <div className="card mb-4 p-4 shadow-sm rounded-4">
+                <div className="d-flex align-items-center gap-4">
+                  <img
+                    src={pet.image || "/assets/images/no-image.png"}
+                    alt={pet.name}
+                    style={{
+                      width: "100px",
+                      height: "100px",
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                      border: "3px solid #eee",
+                    }}
+                  />
 
-              <div className="row">
+                  <div>
+                    <h3 className="mb-1">{pet.name}</h3>
 
-                {showForm && (
-                  <div className="col-lg-6">
-                    <div className="registration__form-wrap">
-                      <form
-                        className="registration__form"
-                        onSubmit={addVaccine}
+                    <div className="text-muted mb-2">
+                      {pet.breed} • {pet.categoryName}
+                    </div>
+
+                    <div className="d-flex gap-3">
+                      <span className="badge bg-light text-dark px-3 py-2">
+                        Age: {pet.age} yrs
+                      </span>
+
+                      <span className="badge bg-light text-dark px-3 py-2">
+                        Weight: {pet.weight || "N/A"} kg
+                      </span>
+
+                      <span
+                        className={` badge px-3 py-2 ${
+                          pet.status === "adopted" ? "bg-danger" : "bg-success"
+                        }`}
                       >
-                        <h3 className="title">Add Vaccination</h3>
-
-                        <div className="row gutter-20">
-                          <div className="col-md-12">
-                            <div className="form-grp">
-                              <select
-                                value={vaccineName}
-                                onChange={(e) => setVaccineName(e.target.value)}
-                                required
-                              >
-                                <option value="">Select Vaccine</option>
-                                <option value="Rabies">Rabies</option>
-                                <option value="FVRCP">FVRCP</option>
-                                <option value="FeLV">FeLV</option>
-                              </select>
-                            </div>
-                          </div>
-
-                          <div className="col-md-12">
-                            <div className="form-grp">
-                              <input
-                                type="date"
-                                value={nextDate}
-                                onChange={(e) => setNextDate(e.target.value)}
-                                required
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <button className="btn me-2">Add Vaccine</button>
-
-                        <button
-                          type="button"
-                          className="btn btn-light"
-                          onClick={() => setShowForm(false)}
-                        >
-                          Cancel
-                        </button>
-                      </form>
+                        {pet.status}
+                      </span>
                     </div>
                   </div>
-                )}
-
-                <div className="col-lg-6">
-                  <h4 className="mb-3">Pet Health Timeline</h4>
-
-                  <div className="card p-3 mb-4">
-                    <ul className="list-unstyled mb-0">
-                      <li>💉 Vaccination Records</li>
-                      <li className="text-muted">🪱 Deworming (Coming Soon)</li>
-                      <li className="text-muted">
-                        🩺 Vet Visits (Coming Soon)
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h4 className="mb-0">Vaccination Records</h4>
-
-                    {!showForm && (
-                      <button
-                        className="btn btn-sm btn-theme"
-                        onClick={() => setShowForm(true)}
-                      >
-                        + Add Vaccine
-                      </button>
-                    )}
-                  </div>
-
-                  {vaccines.length === 0 ? (
-                    <div className="alert alert-info">
-                      No vaccination records yet. Add your pet's first vaccine.
-                    </div>
-                  ) : (
-                    vaccines.map((vac) => {
-                      const status = getVaccineStatus(vac.nextDueDate);
-
-                      return (
-                        <div
-                          key={vac.id}
-                          className="card border-0 shadow-sm p-3 mb-3"
-                        >
-                          <div className="d-flex justify-content-between align-items-center">
-                            <h6 className="mb-0">{vac.vaccineName}</h6>
-
-                            <span className={`badge ${status.className}`}>
-                              {status.label}
-                            </span>
-                          </div>
-
-                          <p className="mb-0 mt-2 text-muted">
-                            Next Due Date:{" "}
-                            {vac.nextDueDate
-                              ? new Date(
-                                  vac.nextDueDate?.seconds
-                                    ? vac.nextDueDate.seconds * 1000
-                                    : vac.nextDueDate,
-                                ).toDateString()
-                              : "Not set"}
-                          </p>
-                        </div>
-                      );
-                    })
-                  )}
                 </div>
               </div>
+            )}
+
+            {/* ================= TABS ================= */}
+            <div className="d-flex gap-3 mb-4">
+              {["vaccination", "deworming", "vet"].map((tab) => (
+                <button
+                  key={tab}
+                  className={`btn ${
+                    activeTab === tab ? "btn-theme" : "btn-light"
+                  }`}
+                  onClick={() => setActiveTab(tab)}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            {/* ================= ADD BUTTON ================= */}
+            <div className="mb-3">
+              <button
+                className="btn btn-theme"
+                onClick={() => setShowForm(true)}
+              >
+                + Add Record
+              </button>
+            </div>
+
+            {/* ================= FORM ================= */}
+            {showForm && (
+              <form onSubmit={addRecord} className="card p-3 mb-4">
+
+                {recordType === "vaccination" && (
+                  <select
+                    value={vaccineName}
+                    onChange={(e) => setVaccineName(e.target.value)}
+                    className="form-control mb-2"
+                  >
+                    <option value="">Select Vaccine</option>
+                    <option>DHPP</option>
+                    <option>Rabies</option>
+                    <option>FVRCP</option>
+                    <option>FeLV</option>
+                  </select>
+                )}
+                <input
+                  type="date"
+                  value={givenDate}
+                  onChange={(e) => setGivenDate(e.target.value)}
+                  className="form-control mb-2"
+                />
+
+                <button className="btn btn-theme">Save</button>
+              </form>
+            )}
+
+            {/* ================= CARDS ================= */}
+            {/* <div className="row">
+              {records
+                .filter((r) => r.type === activeTab)
+                .map((rec) => {
+                  const status = getVaccineStatus(rec.nextDueDate);
+
+                  return (
+                    <div className="col-md-6 mb-4" key={rec.id}>
+                      <div className="card p-4 shadow-sm rounded-4">
+                        <div className="d-flex justify-content-between">
+                          <h5>{rec.vaccineName}</h5>
+                          <span className={`badge ${status.className}`}>
+                            {status.label}
+                          </span>
+                        </div>
+
+                        <p className="text-muted">
+                          Given:{" "}
+                          {rec.givenDate
+                            ? new Date(
+                                rec.givenDate.seconds * 1000,
+                              ).toDateString()
+                            : "-"}
+                        </p>
+
+                        <p className="text-muted">
+                          Next:{" "}
+                          {rec.nextDueDate
+                            ? new Date(
+                                rec.nextDueDate.seconds * 1000,
+                              ).toDateString()
+                            : "-"}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div> */}
+            <div className="row">
+              {records
+                .filter((r) => r.type === activeTab)
+                .map((rec) => {
+                  const status = getVaccineStatus(rec.nextDueDate);
+
+                  return (
+                    <div className="col-md-6 mb-4" key={rec.id}>
+                      <div
+                        className="p-4 rounded-4 shadow-sm"
+                        style={{
+                          background: "#fff",
+                          borderLeft: `6px solid ${
+                            status.className === "bg-danger"
+                              ? "#ff4d4f"
+                              : status.className === "bg-warning"
+                                ? "#faad14"
+                                : "#52c41a"
+                          }`,
+                        }}
+                      >
+                        {/* HEADER */}
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <h5 style={{ fontWeight: "600" }}>
+                            💉 {rec.vaccineName}
+                          </h5>
+
+                          <span
+                            className="px-3 py-1 rounded-pill"
+                            style={{
+                              background:
+                                status.className === "bg-danger"
+                                  ? "#ffe5e5"
+                                  : status.className === "bg-warning"
+                                    ? "#fff7e6"
+                                    : "#eaffea",
+                              color:
+                                status.className === "bg-danger"
+                                  ? "#d32f2f"
+                                  : status.className === "bg-warning"
+                                    ? "#d48806"
+                                    : "#2e7d32",
+                              fontSize: "12px",
+                            }}
+                          >
+                            {status.label}
+                          </span>
+                        </div>
+
+                        {/* DATES */}
+                        <p className="text-muted mb-1">
+                          🗓 Given:{" "}
+                          {rec.givenDate
+                            ? new Date(
+                                rec.givenDate.seconds * 1000,
+                              ).toDateString()
+                            : "N/A"}
+                        </p>
+
+                        <p className="text-muted mb-0">
+                          ⏭ Next Due:{" "}
+                          {rec.nextDueDate
+                            ? new Date(
+                                rec.nextDueDate.seconds * 1000,
+                              ).toDateString()
+                            : "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           </div>
-        </section>
-      </main>
+        </main>
 
-      <Footer />
-    </>
-  );
-}
+        <Footer />
+      </>
+    );
+  }

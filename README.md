@@ -1,16 +1,56 @@
-# React + Vite
+# 🌐 React Frontend (Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the frontend of the project built using **React.js + Vite**, following a modular and scalable folder structure.
 
-Currently, two official plugins are available:
+## 🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### ⚙️ Technical Features
 
-## React Compiler
+* ⚡ Fast development with Vite (HMR enabled)
+* 🔗 API integration using services layer
+* 🧠 State management using store
+* ♻️ Reusable components architecture
+* 📱 Responsive design
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 🐾 Application Features
 
-## Expanding the ESLint configuration
+* 🐾 Pet management system (add/view pets)
+* 🛒 Cart functionality for products
+* 📅 Service booking system
+* 🔔 Notifications system
+* 📖 Pet care tips and detailed guides
+* 👤 User dashboard
+* 🔐 Authentication (if implemented)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 📂 Folder Structure
+
+```
+src/
+│── components/    # Reusable UI components
+│── pages/         # Application pages
+│── routes/        # Routing logic
+│── services/      # API calls
+│── store/         # State management
+│── utils/         # Helper functions
+│── assets/        # Images & static files
+│
+│── App.jsx        # Root component
+│── main.jsx       # Entry point
+```
+
+## ⚙️ Setup
+
+```bash
+npm install
+npm run dev
+```
+
+## 🌍 Deployment
+
+Deployed on Vercel. Every push to GitHub triggers automatic deployment.
+
+🔗 Live Demo: https://petpal.vercel.app
+
+## 👩‍💻 Author
+
+Sneha Vaghela

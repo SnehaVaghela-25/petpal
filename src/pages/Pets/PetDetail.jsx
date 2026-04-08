@@ -81,18 +81,41 @@ function PetDetails() {
     );
   }
 
-  async function handleAdoptionPayment(pet) {
-    const success = await startRazorpayPayment({
-      amount: 500,
-      user: userStore,
-      serviceType: "adoption",
-      referenceId: pet.id,
+  // async function handleAdoptionPayment(pet) {
+  //   const success = await startRazorpayPayment({
+  //     amount: pet.bookingFee || 500,
+  //     user: userStore,
+  //     serviceType: "adoption",
+  //     referenceId: pet.id,
+  //   });
+
+  //   if (success) {
+  //     console.log("Proceed with adoption request");
+  //   }
+  // }
+
+async function handleAdoptionPayment(pet) {
+  const success = await startRazorpayPayment({
+    amount: pet.bookingFee || 500,
+    user: userStore,
+    serviceType: "adoption",
+    referenceId: pet.id,
+  });
+
+  if (success) {
+    Swal.fire({
+      icon: "success",
+      title: "Payment Successful 🎉",
+      text: "Now fill adoption details",
+      timer: 1500,
+      showConfirmButton: false,
     });
 
-    if (success) {
-      console.log("Proceed with adoption request");
-    }
+    setTimeout(() => {
+      navigate(`/showinterest/${pet.id}`);
+    }, 1500);
   }
+}
 
   return (
     <>
@@ -112,18 +135,16 @@ function PetDetails() {
                 {/* LEFT SIDE - IMAGE */}
                 <div className="col-lg-6">
                   <div className="animal__details-img-wrap ">
-                   
-                      <img
-                        src={pet.image || "/images/no-pet.png"}
-                        alt={pet.name}
-                        style={{
-                          width: "100%",
-                          height: "450px",
-                          objectFit: "contain", 
-                          borderRadius: "12px",
-                        }}
-                      />
-                   
+                    <img
+                      src={pet.image || "/images/no-pet.png"}
+                      alt={pet.name}
+                      style={{
+                        width: "100%",
+                        height: "450px",
+                        objectFit: "contain",
+                        borderRadius: "12px",
+                      }}
+                    />
                   </div>
                 </div>
 
@@ -180,7 +201,31 @@ function PetDetails() {
 
                     {/* PRICE */}
                     <h4 className="price mt-3">
-                      Adoption Fee: ₹{pet.price || "0"}
+                      {/* Adoption Fee: ₹{pet.price || "0"} */}
+                      {/* PRICE / PAYMENT */}
+                      <div className="mt-3">
+                        <h4>Adoption Details:</h4>
+
+                        <p style={{ margin: 0 }}>
+                          Adoption Fee: ₹{pet.adoptionFee || 0}
+                        </p>
+
+                        <p style={{ margin: 0 }}>
+                          Booking Fee: ₹{pet.bookingFee || 500}
+                        </p>
+
+                        <p
+                          style={{
+                            margin: 0,
+                            color: "green",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          Remaining: ₹
+                          {(pet.adoptionFee || 0) - (pet.bookingFee || 500)}{" "}
+                          (pay at shelter)
+                        </p>
+                      </div>
                     </h4>
 
                     {/* BUTTON */}
@@ -202,16 +247,7 @@ function PetDetails() {
                               return;
                             }
 
-                            Swal.fire({
-                              icon: "success",
-                              title: "Proceeding...",
-                              timer: 1200,
-                              showConfirmButton: false,
-                            });
-
-                            setTimeout(() => {
-                              navigate(`/showinterest/${id}`);
-                            }, 1200);
+                            navigate(`/showinterest/${id}`);
                           }}
                         >
                           Adopt Now
@@ -234,10 +270,10 @@ function PetDetails() {
 
                 <div className="introducing__list-box">
                   <ul className="list-wrap">
-                    {pet.health?.vaccinated && <li>✔ Vaccine Completed</li>}
-                    {pet.health?.vetChecked && <li>✔ Vet Checked</li>}
                     <li>✔ Adoption Support Available</li>
                     <li>✔ Verified Listing</li>
+                    <li>✔ Secure Booking Process</li>
+                    <li>✔ Shelter Pickup Assistance</li>
                   </ul>
                 </div>
               </div>
