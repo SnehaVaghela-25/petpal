@@ -49,7 +49,7 @@ npm run dev
 
 Deployed on Vercel. Every push to GitHub triggers automatic deployment.
 
-🔗 Live Demo: petpal-rc6qkvmp7-snehavaghela-25s-projects.vercel.app
+🔗 Live Demo: https://petpal-rc6qkvmp7-snehavaghela-25s-projects.vercel.app
 
 ## 👩‍💻 Author
 
